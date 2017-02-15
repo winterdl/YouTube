@@ -18,8 +18,6 @@ class VideoPlayerView: UIView {
         return aiv
     }()
     
-    
-    
     let pausePlayButton: UIButton = {
         let pb = UIButton()
         pb.setImage(UIImage(named: "pause"), for: .normal)
@@ -53,6 +51,43 @@ class VideoPlayerView: UIView {
         return view
     }()
     
+    let videoLengthLabel : UILabel = {
+        let label = UILabel()
+        label.text = "00:00"
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = UIFont.boldSystemFont(ofSize: 14)
+        label.textAlignment = .right
+        return label
+    }()
+    
+    let videoSlide: UISlider = {
+        let slider = UISlider()
+        slider.translatesAutoresizingMaskIntoConstraints = false
+        slider.minimumTrackTintColor = .red
+        slider.maximumTrackTintColor = .white
+        slider.setThumbImage(UIImage(named: "thumb"), for: .normal)
+        slider.addTarget(self, action: #selector(handleSliderChanged), for: .valueChanged)
+        return slider
+    }()
+    
+    
+    func handleSliderChanged() {
+    
+        if let duration = player?.currentItem?.duration {
+            let totalSeconds = CMTimeGetSeconds(duration)
+        
+            let value = Float64(videoSlide.value) * totalSeconds
+        
+            let seekTime = CMTime(value: Int64(value), timescale: 1)
+                player?.seek(to: seekTime, completionHandler: {
+                    (completedSeek) in
+            
+                })
+        }
+    
+    }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -71,6 +106,18 @@ class VideoPlayerView: UIView {
         pausePlayButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
         pausePlayButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         pausePlayButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
+
+        controlsContainerView.addSubview(videoLengthLabel)
+        videoLengthLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -8).isActive = true
+        videoLengthLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
+        videoLengthLabel.widthAnchor.constraint(equalToConstant: 60).isActive = true
+        videoLengthLabel.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        
+        controlsContainerView.addSubview(videoSlide)
+        videoSlide.rightAnchor.constraint(equalTo: videoLengthLabel.leftAnchor).isActive = true
+        videoSlide.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
+        videoSlide.leftAnchor.constraint(equalTo: self.leftAnchor).isActive = true
+        videoSlide.heightAnchor.constraint(equalToConstant: 30).isActive = true
         
         backgroundColor = .black
 
@@ -100,6 +147,15 @@ class VideoPlayerView: UIView {
             controlsContainerView.backgroundColor = .clear
             pausePlayButton.isHidden = false
             isPlaying = true
+            
+            if let duration = player?.currentItem?.duration {
+                let seconds = CMTimeGetSeconds(duration)
+                
+                let secondsText = Int(seconds) % 60
+                let minutesText = String(format: "%02d", Int(seconds) / 60) // this line will give 00:
+                
+                videoLengthLabel.text = "\(minutesText):\(secondsText)"
+            }
         }
     }
     
