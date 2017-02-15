@@ -56,13 +56,24 @@ class VideoPlayerView: UIView {
         label.text = "00:00"
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = UIFont.boldSystemFont(ofSize: 14)
+        label.font = UIFont.boldSystemFont(ofSize: 13)
+        label.textAlignment = .right
+        return label
+    }()
+    
+    let currenTimeLabel : UILabel = {
+        let label = UILabel()
+        label.text = "00:00"
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = UIFont.boldSystemFont(ofSize: 13)
         label.textAlignment = .right
         return label
     }()
     
     let videoSlide: UISlider = {
         let slider = UISlider()
+        
         slider.translatesAutoresizingMaskIntoConstraints = false
         slider.minimumTrackTintColor = .red
         slider.maximumTrackTintColor = .white
@@ -93,6 +104,8 @@ class VideoPlayerView: UIView {
         
         setupPlayerView()
         
+        setupGradienLayer()
+        
         controlsContainerView.frame = frame
         addSubview(controlsContainerView)
         
@@ -109,18 +122,34 @@ class VideoPlayerView: UIView {
 
         controlsContainerView.addSubview(videoLengthLabel)
         videoLengthLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -8).isActive = true
-        videoLengthLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
-        videoLengthLabel.widthAnchor.constraint(equalToConstant: 60).isActive = true
+        videoLengthLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -2).isActive = true
+        videoLengthLabel.widthAnchor.constraint(equalToConstant: 50).isActive = true
         videoLengthLabel.heightAnchor.constraint(equalToConstant: 24).isActive = true
         
+        controlsContainerView.addSubview(currenTimeLabel)
+        currenTimeLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: -4).isActive = true
+        currenTimeLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -2).isActive = true
+        currenTimeLabel.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        currenTimeLabel.heightAnchor.constraint(equalToConstant: 24).isActive = true
+
         controlsContainerView.addSubview(videoSlide)
         videoSlide.rightAnchor.constraint(equalTo: videoLengthLabel.leftAnchor).isActive = true
         videoSlide.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
-        videoSlide.leftAnchor.constraint(equalTo: self.leftAnchor).isActive = true
+        videoSlide.leftAnchor.constraint(equalTo: currenTimeLabel.rightAnchor, constant: 8).isActive = true
         videoSlide.heightAnchor.constraint(equalToConstant: 30).isActive = true
         
         backgroundColor = .black
 
+    }
+    
+    func setupGradienLayer() {
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.frame = bounds
+        gradientLayer.colors = [UIColor.clear.cgColor, UIColor.black.cgColor]
+        gradientLayer.locations = [0.7, 1.2]
+        
+        
+        controlsContainerView.layer.addSublayer(gradientLayer)
     }
     
     var player: AVPlayer?
@@ -138,6 +167,27 @@ class VideoPlayerView: UIView {
             player?.play()
             
             player?.addObserver(self, forKeyPath: "currentItem.loadedTimeRanges", options: .new, context: nil)
+            
+            // track player progress
+            
+            let interval = CMTime(value: 1, timescale: 2)
+            
+            player?.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main, using: {
+                (progressTime) in
+                    let seconds = CMTimeGetSeconds(progressTime)
+                    let secondsString = String(format: "%02d", Int(seconds) % 60)
+                    let minutesString = String(format: "%02d", Int(seconds) / 60)
+                    self.currenTimeLabel.text = "\(minutesString):\(secondsString)"
+                
+                // move the slider thumb
+                if let duration = self.player?.currentItem?.duration {
+                    let durationSeconds = CMTimeGetSeconds(duration)
+
+                    self.videoSlide.value = Float(seconds / durationSeconds)
+                }
+                
+            })
+            
         }
     }
     
