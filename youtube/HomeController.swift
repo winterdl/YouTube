@@ -46,10 +46,8 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         }
         
         collectionView?.backgroundColor = UIColor.white
-        //collectionView?.register(FeedCell.self, forCellWithReuseIdentifier: cellId)
         
-        collectionView?.register(CellCollectionViewCell.self, forCellWithReuseIdentifier: cellId)
-
+        collectionView?.register(FeedCell.self, forCellWithReuseIdentifier: cellId)
         collectionView?.register(TrendingCell.self, forCellWithReuseIdentifier: trendingCellId)
         collectionView?.register(SubscriptionCell.self, forCellWithReuseIdentifier: subscriptionCellId)
         
@@ -136,7 +134,7 @@ class HomeController: UICollectionViewController, UICollectionViewDelegateFlowLa
         
     }
     
-    // MARK: - Collection view methods
+    // MARK: - CollectionView methods
     
     override func scrollViewDidScroll(_ scrollView: UIScrollView) {
         menuBar.horisontalBarLeftAncorConstrains?.constant = scrollView.contentOffset.x / 4
