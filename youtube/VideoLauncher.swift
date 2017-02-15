@@ -11,27 +11,96 @@ import AVFoundation
 
 class VideoPlayerView: UIView {
 
+    let activityIndicatorView: UIActivityIndicatorView = {
+        let aiv = UIActivityIndicatorView(activityIndicatorStyle: .whiteLarge)
+        aiv.startAnimating()
+        aiv.translatesAutoresizingMaskIntoConstraints = false
+        return aiv
+    }()
     
+    
+    
+    let pausePlayButton: UIButton = {
+        let pb = UIButton()
+        pb.setImage(UIImage(named: "pause"), for: .normal)
+        pb.translatesAutoresizingMaskIntoConstraints = false
+        pb.tintColor = .white
+        pb.isHidden = true
+        pb.addTarget(self, action: #selector(handlePause), for: .touchUpInside)
+        
+        return pb
+    }()
+
+    var isPlaying = false
+    
+    func handlePause() {
+        
+        if isPlaying {
+            player?.pause()
+            pausePlayButton.setImage(UIImage(named: "play"), for: .normal)
+        } else {
+            player?.play()
+            pausePlayButton.setImage(UIImage(named: "pause"), for: .normal)
+
+        }
+      
+        isPlaying = !isPlaying
+    }
+    
+    let controlsContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(white: 0, alpha: 1)
+        return view
+    }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        backgroundColor = .black
+        setupPlayerView()
         
+        controlsContainerView.frame = frame
+        addSubview(controlsContainerView)
+        
+
+        addSubview(activityIndicatorView)
+        activityIndicatorView.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
+        activityIndicatorView.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+        
+        controlsContainerView.addSubview(pausePlayButton)
+        pausePlayButton.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
+        pausePlayButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+        pausePlayButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        pausePlayButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        
+        backgroundColor = .black
+
+    }
+    
+    var player: AVPlayer?
+    
+    func setupPlayerView () {
         let urlString = "https://firebasestorage.googleapis.com/v0/b/gameofchats-762ca.appspot.com/o/message_movies%2F12323439-9729-4941-BA07-2BAE970967C7.mov?alt=media&token=3e37a093-3bc8-410f-84d3-38332af9c726"
         if let url = URL(string: urlString) {
-         
-            let player = AVPlayer(url: url)
+            
+            player = AVPlayer(url: url)
             
             let playerlayer = AVPlayerLayer(player: player)
             self.layer.addSublayer(playerlayer)
             playerlayer.frame = self.frame
             
-            player.play()
+            player?.play()
+            
+            player?.addObserver(self, forKeyPath: "currentItem.loadedTimeRanges", options: .new, context: nil)
         }
-        
-        
-        
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "currentItem.loadedTimeRanges" {
+            activityIndicatorView.stopAnimating()
+            controlsContainerView.backgroundColor = .clear
+            pausePlayButton.isHidden = false
+            isPlaying = true
+        }
     }
     
     required init?(coder aDecoder: NSCoder) {
